@@ -12,37 +12,67 @@ Model name is converted to lowercase for the collection name:
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 
-# Example schemas (replace with your own):
+# Voting system schemas
 
-class User(BaseModel):
+class Voter(BaseModel):
     """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
+    Voters collection schema
+    Collection name: "voter"
     """
+    aadhaar: str = Field(..., min_length=8, description="Aadhaar number (simulated)")
     name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+    phone: str = Field(..., min_length=8, description="Phone number for OTP")
+    face_hash: Optional[str] = Field(None, description="SHA256 hash of face image for verification")
+    has_voted: bool = Field(False, description="Whether the voter has already cast a vote")
+
+class Candidate(BaseModel):
+    """
+    Candidates collection schema
+    Collection name: "candidate"
+    """
+    name: str = Field(..., description="Candidate name")
+    party: Optional[str] = Field(None, description="Party or affiliation")
+
+class Vote(BaseModel):
+    """
+    Votes collection schema
+    Collection name: "vote"
+    """
+    aadhaar: str = Field(..., description="Aadhaar of voter who cast the vote")
+    candidate_id: str = Field(..., description="ID of the candidate voted for")
+
+class OtpRequest(BaseModel):
+    """
+    OTP requests collection schema
+    Collection name: "otprequest"
+    """
+    aadhaar: str = Field(..., description="Voter Aadhaar")
+    otp: str = Field(..., description="One-time password (simulated)")
+    expires_at: int = Field(..., description="Unix timestamp for expiry")
+    verified: bool = Field(False, description="Whether OTP was verified")
+
+class Verification(BaseModel):
+    """
+    Temporary verification flags
+    Collection name: "verification"
+    """
+    aadhaar: str = Field(...)
+    otp_verified_at: Optional[int] = Field(None)
+    face_verified_at: Optional[int] = Field(None)
+
+# Example schemas kept for reference (not used by app)
+class User(BaseModel):
+    name: str
+    email: str
+    address: str
+    age: Optional[int] = None
+    is_active: bool = True
 
 class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
-
-# Add your own schemas here:
-# --------------------------------------------------
-
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+    title: str
+    description: Optional[str] = None
+    price: float
+    category: str
+    in_stock: bool = True
